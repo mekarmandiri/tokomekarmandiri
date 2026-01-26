@@ -44,7 +44,7 @@ select{width:100%;padding:8px;border-radius:6px;margin-top:6px}
 <div class="modal" id="qrisModal">
 <div class="modal-content">
 <h3>Scan QRIS</h3>
-<img src="qris.jpg" alt="QRIS Toko Mekar Mandiri">
+<img src="qris.jpeg" alt="QRIS Toko Mekar Mandiri">
 <p>Setelah bayar, klik tombol di bawah</p>
 <button onclick="konfirmasi()">Saya sudah bayar</button><br><br>
 <button onclick="closeModal()">Tutup</button>
@@ -70,14 +70,14 @@ const list=document.getElementById("produkList");
 produk.forEach((p,i)=>{
 const c=document.createElement("div");
 c.className="card";
-c.innerHTML=`<h4>${p.nama}</h4><div class="price">Rp${p.harga.toLocaleString()}</div><button onclick="add(${i})">Tambah</button>`;
+c.innerHTML=<h4>${p.nama}</h4><div class="price">Rp${p.harga.toLocaleString()}</div><button onclick="add(${i})">Tambah</button>;
 list.appendChild(c);
 });
 function add(i){cart.push(produk[i]);render();}
 function render(){
 if(cart.length==0){cartText.innerText="🛒 Keranjang kosong";totalHarga.innerText="Total: Rp0";return;}
 let t="",tot=0;
-cart.forEach(p=>{t+=`• ${p.nama}\n`;tot+=p.harga});
+cart.forEach(p=>{t+=• ${p.nama}\n;tot+=p.harga});
 cartText.innerText=t;
 totalHarga.innerText="Total: Rp"+tot.toLocaleString();
 }
@@ -88,9 +88,9 @@ if(pembayaran.value==="QRIS"){qrisModal.style.display="flex";}else{konfirmasi();
 function konfirmasi(){
 let msg="Halo Toko Mekar Mandiri, saya sudah bayar/pesan:%0A";
 let tot=0;
-cart.forEach(p=>{msg+=`- ${p.nama} (Rp${p.harga})%0A`;tot+=p.harga});
-msg+=`%0ATotal: Rp${tot}%0APembayaran: ${pembayaran.value}`;
-window.open(`https://wa.me/${whatsapp}?text=${msg}`,"_blank");
+cart.forEach(p=>{msg+=- ${p.nama} (Rp${p.harga})%0A;tot+=p.harga});
+msg+=%0ATotal: Rp${tot}%0APembayaran: ${pembayaran.value};
+window.open(https://wa.me/${whatsapp}?text=${msg},"_blank");
 }
 function closeModal(){qrisModal.style.display="none";}
 </script>
