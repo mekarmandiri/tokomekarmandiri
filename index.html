@@ -4,42 +4,247 @@
 <meta charset="UTF-8">
 <title>Toko Mekar Mandiri</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f8}
-header{background:#2e7d32;color:#fff;padding:16px;text-align:center}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:15px}
-.card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1)}
-button{background:#2e7d32;color:#fff;border:none;padding:8px;border-radius:6px;width:100%}
+:root{
+  --primary:#2e7d32;
+  --secondary:#e8f5e9;
+  --bg:#f4f6f8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Segoe UI, Arial;
+  background:var(--bg);
+}
+header{
+  background:linear-gradient(135deg,#2e7d32,#43a047);
+  color:#fff;
+  padding:20px;
+  text-align:center;
+}
+header h2{margin:0}
+header p{margin:6px 0 0;font-size:14px}
+
+.container{
+  padding:15px;
+  padding-bottom:170px;
+}
+
+.category{
+  margin-bottom:25px;
+}
+.category h3{
+  margin:0 0 10px;
+  color:var(--primary);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:12px;
+}
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 6px 14px rgba(0,0,0,.08);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.card h4{
+  margin:0 0 6px;
+  font-size:15px;
+}
+.price{
+  color:var(--primary);
+  font-weight:bold;
+  margin-bottom:10px;
+}
+button{
+  background:var(--primary);
+  border:none;
+  color:#fff;
+  padding:8px;
+  border-radius:8px;
+  cursor:pointer;
+}
+button:active{transform:scale(.97)}
+
+.cart{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#fff;
+  border-top:2px solid var(--primary);
+  padding:12px;
+}
+.cart-items{
+  font-size:14px;
+  white-space:pre-line;
+}
+.total{
+  font-weight:bold;
+  margin-top:6px;
+}
+select{
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  margin-top:6px;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  align-items:center;
+  justify-content:center;
+}
+.modal-content{
+  background:#fff;
+  padding:16px;
+  border-radius:14px;
+  width:90%;
+  max-width:320px;
+  text-align:center;
+}
+.modal img{
+  width:100%;
+  border-radius:10px;
+}
 </style>
 </head>
+
 <body>
 
 <header>
   <h2>Toko Mekar Mandiri</h2>
-  <p>Versi Test (Harus Muncul)</p>
+  <p>Sembako & Klontong • Pesan Online</p>
 </header>
 
-<div class="grid" id="list"></div>
+<div class="container" id="produkList"></div>
+
+<div class="cart">
+  <div class="cart-items" id="cartText">🛒 Keranjang kosong</div>
+  <div class="total" id="totalHarga">Total: Rp0</div>
+  <select id="pembayaran">
+    <option>Transfer Bank</option>
+    <option>COD (Bayar di Tempat)</option>
+    <option>QRIS</option>
+  </select>
+  <button onclick="checkout()">Checkout</button>
+</div>
+
+<div class="modal" id="qrisModal">
+  <div class="modal-content">
+    <h3>Scan QRIS</h3>
+    <img src="qris.jpg" alt="QRIS">
+    <p>Setelah bayar, klik tombol di bawah</p>
+    <button onclick="konfirmasi()">Saya sudah bayar</button><br><br>
+    <button onclick="closeModal()">Tutup</button>
+  </div>
+</div>
 
 <script>
-const produk = [
-  {nama:"Beras", harga:12000},
-  {nama:"Gula", harga:14000},
-  {nama:"Minyak", harga:16000}
-];
+const whatsapp = "6285162808162";
 
-const list = document.getElementById("list");
+const data = {
+  "Sembako":[
+    {nama:"Beras Medium", harga:12000},
+    {nama:"Beras Super", harga:14000},
+    {nama:"Gula Pasir", harga:14000},
+    {nama:"Minyak Goreng", harga:16000}
+  ],
+  "Makanan":[
+    {nama:"Mie Instan", harga:3000},
+    {nama:"Tepung Terigu", harga:10000}
+  ],
+  "Kebersihan":[
+    {nama:"Sabun Mandi", harga:5000},
+    {nama:"Shampo", harga:7000},
+    {nama:"Pasta Gigi", harga:9000}
+  ],
+  "Minuman":[
+    {nama:"Air Mineral", harga:4000}
+  ]
+};
 
-produk.forEach(p=>{
-  const div = document.createElement("div");
-  div.className = "card";
-  div.innerHTML = `
-    <h4>${p.nama}</h4>
-    <p>Rp${p.harga.toLocaleString()}</p>
-    <button>Tambah</button>
-  `;
-  list.appendChild(div);
-});
+let cart = [];
+const produkList = document.getElementById("produkList");
+const cartText = document.getElementById("cartText");
+const totalHarga = document.getElementById("totalHarga");
+const pembayaran = document.getElementById("pembayaran");
+const qrisModal = document.getElementById("qrisModal");
+
+for(const kategori in data){
+  const section = document.createElement("div");
+  section.className = "category";
+  section.innerHTML = `<h3>${kategori}</h3><div class="grid"></div>`;
+  const grid = section.querySelector(".grid");
+
+  data[kategori].forEach(p=>{
+    const card = document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <h4>${p.nama}</h4>
+      <div class="price">Rp${p.harga.toLocaleString()}</div>
+      <button>Tambah</button>
+    `;
+    card.querySelector("button").onclick=()=>add(p);
+    grid.appendChild(card);
+  });
+
+  produkList.appendChild(section);
+}
+
+function add(p){
+  cart.push(p);
+  render();
+}
+
+function render(){
+  if(cart.length===0){
+    cartText.innerText="🛒 Keranjang kosong";
+    totalHarga.innerText="Total: Rp0";
+    return;
+  }
+  let text="", total=0;
+  cart.forEach(p=>{
+    text+=`• ${p.nama}\n`;
+    total+=p.harga;
+  });
+  cartText.innerText=text;
+  totalHarga.innerText="Total: Rp"+total.toLocaleString();
+}
+
+function checkout(){
+  if(cart.length===0) return alert("Keranjang kosong");
+  if(pembayaran.value==="QRIS"){
+    qrisModal.style.display="flex";
+  }else{
+    konfirmasi();
+  }
+}
+
+function konfirmasi(){
+  let total=0;
+  let msg=`Halo Toko Mekar Mandiri, saya ingin pesan:%0A`;
+  cart.forEach(p=>{
+    msg+=`- ${p.nama} (Rp${p.harga})%0A`;
+    total+=p.harga;
+  });
+  msg+=`%0ATotal: Rp${total}%0APembayaran: ${pembayaran.value}`;
+  window.open(`https://wa.me/${whatsapp}?text=${msg}`,"_blank");
+}
+
+function closeModal(){
+  qrisModal.style.display="none";
+}
 </script>
 
 </body>
