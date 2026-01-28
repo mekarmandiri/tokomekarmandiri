@@ -24,7 +24,7 @@ header{
 }
 .container{
   padding:15px;
-  padding-bottom:220px;
+  padding-bottom:230px;
 }
 .category h3{color:var(--primary)}
 .grid{
@@ -90,7 +90,7 @@ select{
   padding:16px;
   border-radius:14px;
   width:90%;
-  max-width:340px;
+  max-width:360px;
   text-align:center;
 }
 </style>
@@ -106,7 +106,7 @@ select{
 <div class="container" id="produkList"></div>
 
 <div class="cart">
-  <div id="cartText">🛒 Keranjang kosong</div>
+  <pre id="cartText">🛒 Keranjang kosong</pre>
   <div id="totalHarga"><b>Total: Rp0</b></div>
   <select id="pembayaran">
     <option>COD</option>
@@ -141,9 +141,10 @@ select{
 </div>
 
 <script>
-/* ================= DATA ================= */
+/* ========= KONFIG ========= */
 const whatsapp="6285162808162";
 
+/* ========= DATA ========= */
 const data={
   "Sembako":[
     {nama:"Beras Medium",harga:14000},
@@ -160,7 +161,7 @@ const data={
 let cart=[];
 let antrian=Number(localStorage.getItem("antrian")||0);
 
-/* ================= RENDER PRODUK ================= */
+/* ========= RENDER PRODUK ========= */
 const produkList=document.getElementById("produkList");
 
 for(let k in data){
@@ -186,7 +187,7 @@ for(let k in data){
   produkList.appendChild(sec);
 }
 
-/* ================= CART ================= */
+/* ========= CART ========= */
 function tambah(nama,harga){
   let item=cart.find(p=>p.nama===nama);
   if(item) item.qty++;
@@ -214,26 +215,25 @@ function render(){
     text+=• ${p.nama} x${p.qty} = Rp${sub.toLocaleString()}\n;
     total+=sub;
   });
-  document.getElementById("cartText").innerText=text||"🛒 Keranjang kosong";
-  document.getElementById("totalHarga").innerText="Total: Rp"+total.toLocaleString();
+  cartText.innerText=text||"🛒 Keranjang kosong";
+  totalHarga.innerHTML="<b>Total: Rp"+total.toLocaleString()+"</b>";
 }
 
-/* ================= CHECKOUT ================= */
+/* ========= CHECKOUT ========= */
 function checkout(){
   if(cart.length===0) return alert("Keranjang kosong");
   let total=cart.reduce((a,b)=>a+b.qty*b.harga,0);
   if(pembayaran.value==="QRIS"){
-    document.getElementById("qrisTotal").innerText="Total: Rp"+total.toLocaleString();
+    qrisTotal.innerText="Total: Rp"+total.toLocaleString();
     qrisModal.style.display="flex";
   }else konfirmasi();
 }
-
 function konfirmasi(){
   closeQRIS();
   tampilkanStruk();
 }
 
-/* ================= STRUK ================= */
+/* ========= STRUK ========= */
 function tampilkanStruk(){
   antrian++;
   localStorage.setItem("antrian",antrian);
@@ -251,14 +251,7 @@ function tampilkanStruk(){
   strukModal.style.display="flex";
 }
 
-function closeStruk(){
-  strukModal.style.display="none";
-  cart=[];
-  render();
-  document.querySelectorAll("[id^=qty-]").forEach(e=>e.innerText="0");
-}
-
-/* ================= WHATSAPP ================= */
+/* ========= WHATSAPP ========= */
 function kirimWA(){
   let msg="🧾 STRUK TOKO MEKAR MANDIRI%0A";
   let total=0;
@@ -266,11 +259,11 @@ function kirimWA(){
     msg+=• ${p.nama} x${p.qty}%0A;
     total+=p.qty*p.harga;
   });
-  msg+=%0ATotal: Rp${total.toLocaleString()};
+  msg+=%0ATotal: Rp${total.toLocaleString()}%0APembayaran: ${pembayaran.value};
   window.open(https://wa.me/${whatsapp}?text=${msg});
 }
 
-/* ================= BLUETOOTH PRINT ================= */
+/* ========= BLUETOOTH PRINT ========= */
 function printBT(){
   let total=0;
   let text="TOKO MEKAR MANDIRI\n";
@@ -283,16 +276,22 @@ function printBT(){
   text+="--------------------------\n";
   text+=TOTAL : ${total}\n;
   text+=BAYAR : ${pembayaran.value}\n;
-  text+=ANTRI : ${antrian}\n\n;
+  text+=ANTRI : ${antrian}\n;
   text+=new Date().toLocaleString("id-ID")+"\n";
-  text+="Terima kasih\n\n\n";
+  text+="Terima kasih\n\n";
 
   window.location.href=
     "intent://print/#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text="+
     encodeURIComponent(text)+";end";
 }
 
-/* ================= UTIL ================= */
+/* ========= UTIL ========= */
+function closeStruk(){
+  strukModal.style.display="none";
+  cart=[];
+  render();
+  document.querySelectorAll("[id^=qty-]").forEach(e=>e.innerText="0");
+}
 function closeQRIS(){qrisModal.style.display="none";}
 </script>
 
