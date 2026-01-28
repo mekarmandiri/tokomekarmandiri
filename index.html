@@ -8,10 +8,8 @@
 <style>
 :root{
   --primary:#2e7d32;
-  --secondary:#e8f5e9;
   --bg:#f4f6f8;
 }
-*{box-sizing:border-box}
 body{
   margin:0;
   font-family:Segoe UI, Arial;
@@ -23,80 +21,44 @@ header{
   padding:20px;
   text-align:center;
 }
-header h2{margin:0}
-header p{margin:6px 0 0;font-size:14px}
-
 .container{
   padding:15px;
-  padding-bottom:170px;
+  padding-bottom:200px;
 }
-
-.category{
-  margin-bottom:25px;
-}
-.category h3{
-  margin:0 0 10px;
-  color:var(--primary);
-}
-
+.category h3{color:var(--primary)}
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:12px;
 }
-
 .card{
   background:#fff;
   border-radius:14px;
   padding:12px;
   box-shadow:0 6px 14px rgba(0,0,0,.08);
+}
+.price{color:var(--primary);font-weight:bold}
+.qty{
   display:flex;
-  flex-direction:column;
-  justify-content:space-between;
+  justify-content:center;
+  gap:8px;
+  margin-top:8px;
 }
-.card h4{
-  margin:0 0 6px;
-  font-size:15px;
-}
-.price{
-  color:var(--primary);
-  font-weight:bold;
-  margin-bottom:10px;
-}
-button{
-  background:var(--primary);
+.qty button{
+  width:30px;
+  height:30px;
   border:none;
+  background:var(--primary);
   color:#fff;
-  padding:8px;
-  border-radius:8px;
-  cursor:pointer;
+  border-radius:50%;
 }
-button:active{transform:scale(.97)}
-
 .cart{
   position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
+  bottom:0;left:0;right:0;
   background:#fff;
   border-top:2px solid var(--primary);
   padding:12px;
 }
-.cart-items{
-  font-size:14px;
-  white-space:pre-line;
-}
-.total{
-  font-weight:bold;
-  margin-top:6px;
-}
-select{
-  width:100%;
-  padding:8px;
-  border-radius:6px;
-  margin-top:6px;
-}
-
 .modal{
   display:none;
   position:fixed;
@@ -110,12 +72,8 @@ select{
   padding:16px;
   border-radius:14px;
   width:90%;
-  max-width:320px;
+  max-width:340px;
   text-align:center;
-}
-.modal img{
-  width:100%;
-  border-radius:10px;
 }
 </style>
 </head>
@@ -124,148 +82,162 @@ select{
 
 <header>
   <h2>Toko Mekar Mandiri</h2>
-  <p>Sembako & Klontong • Pesan Online</p>
+  <p>Sembako & Klontong • Online</p>
 </header>
 
 <div class="container" id="produkList"></div>
 
 <div class="cart">
-  <div class="cart-items" id="cartText">🛒 Keranjang kosong</div>
-  <div class="total" id="totalHarga">Total: Rp0</div>
+  <div id="cartText">🛒 Keranjang kosong</div>
+  <div id="totalHarga"><b>Total: Rp0</b></div>
   <select id="pembayaran">
+    <option>COD</option>
     <option>Transfer Bank</option>
-    <option>COD (Bayar di Tempat)</option>
     <option>QRIS</option>
   </select>
   <button onclick="checkout()">Checkout</button>
 </div>
 
+<!-- MODAL QRIS -->
 <div class="modal" id="qrisModal">
   <div class="modal-content">
-    <h3>Scan QRIS</h3>
-    <img src="qris.jpg" alt="QRIS">
-    <p>Setelah bayar, klik tombol di bawah</p>
+    <h3>💳 Scan QRIS</h3>
+    <p id="qrisTotal"></p>
+    <img src="qris.jpg" style="width:100%;border-radius:10px">
     <button onclick="konfirmasi()">Saya sudah bayar</button><br><br>
     <button onclick="closeModal()">Tutup</button>
   </div>
 </div>
 
-<script>
-const whatsapp = "6285162808162";
+<!-- MODAL STRUK -->
+<div class="modal" id="strukModal">
+  <div class="modal-content">
+    <h3>🧾 STRUK</h3>
+    <div id="strukItem"></div>
+    <p id="strukTotal"></p>
+    <p id="strukBayar"></p>
+    <button onclick="kirimWA()">Kirim ke WhatsApp</button><br><br>
+    <button onclick="closeStruk()">Selesai</button>
+  </div>
+</div>
 
-const data = {
+<script>
+const whatsapp="6285162808162";
+
+const data={
   "Sembako":[
-    {nama:"Beras Medium", harga:14000},
-    {nama:"Beras Super", harga:15500},
-    {nama:"Beras Rojo Lele", harga:17500},
-    {nama:"Gula Jawa 1KG", harga:22000},
-    {nama:"Gula Jawa 0.5KG", harga:11000},
-    {nama:"Gula Pasir", harga:17500},
-    {nama:"MG Kita 1L", harga:17500},
-    {nama:"MG Sunco 1L", harga:17500},
-    {nama:"MG Sunco 2L", harga:18500}
+    {nama:"Beras Medium",harga:14000},
+    {nama:"Beras Super",harga:15500},
+    {nama:"Gula Pasir",harga:17500},
+    {nama:"Minyak Goreng 1L",harga:17500}
   ],
-  "Bahan Ronde":[
-    {nama:"Kolang Kaling", harga:16000},
-    {nama:"Kacang Kupas 1KG", harga:37000},
-    {nama:"Kacang Kupas 0.5KG", harga:18500},
-    {nama:"Kacang Kulit Lokal 1KG", harga:33000},
-    {nama:"Kacang Kulit Lokal 1KG", harga:16500}
-  ],
-  "Empon-empon":[
-    {nama:"Klabet", harga:16000},
-    {nama:"Cabe Jawa", harga:37000},
-    {nama:"Polo", harga:18500},
-    {nama:"Jinten", harga:33000},
-    {nama:"Pekak", harga:16500}
-  ],
-  "Makanan":[
-    {nama:"Mie Instan", harga:3000},
-    {nama:"Tepung Terigu", harga:10000}
-  ],
-  "Kebersihan":[
-    {nama:"Sabun Mandi", harga:5000},
-    {nama:"Shampo", harga:7000},
-    {nama:"Pasta Gigi", harga:9000}
-  ],
-  "Minuman":[
-    {nama:"Air Mineral", harga:4000}
+  "Kebutuhan":[
+    {nama:"Mie Instan",harga:3000},
+    {nama:"Sabun Mandi",harga:5000}
   ]
 };
 
-let cart = [];
-const produkList = document.getElementById("produkList");
-const cartText = document.getElementById("cartText");
-const totalHarga = document.getElementById("totalHarga");
-const pembayaran = document.getElementById("pembayaran");
-const qrisModal = document.getElementById("qrisModal");
+let cart=[];
+let antrian=Number(localStorage.getItem("antrian")||0);
 
-for(const kategori in data){
-  const section = document.createElement("div");
-  section.className = "category";
-  section.innerHTML = `<h3>${kategori}</h3><div class="grid"></div>`;
-  const grid = section.querySelector(".grid");
+const produkList=document.getElementById("produkList");
 
-  data[kategori].forEach(p=>{
-    const card = document.createElement("div");
+for(let k in data){
+  let sec=document.createElement("div");
+  sec.innerHTML=<h3>${k}</h3><div class="grid"></div>;
+  let grid=sec.querySelector(".grid");
+
+  data[k].forEach(p=>{
+    let id=p.nama.replace(/\s/g,'');
+    let card=document.createElement("div");
     card.className="card";
     card.innerHTML=`
       <h4>${p.nama}</h4>
       <div class="price">Rp${p.harga.toLocaleString()}</div>
-      <button>Tambah</button>
-    `;
-    card.querySelector("button").onclick=()=>add(p);
+      <div class="qty">
+        <button onclick="kurang('${p.nama}')">−</button>
+        <span id="qty-${id}">0</span>
+        <button onclick="tambah('${p.nama}',${p.harga})">+</button>
+      </div>`;
     grid.appendChild(card);
   });
-
-  produkList.appendChild(section);
+  produkList.appendChild(sec);
 }
 
-function add(p){
-  cart.push(p);
+function tambah(nama,harga){
+  let item=cart.find(p=>p.nama===nama);
+  if(item) item.qty++;
+  else cart.push({nama,harga,qty:1});
+  updateQty(nama);
   render();
+}
+function kurang(nama){
+  let item=cart.find(p=>p.nama===nama);
+  if(!item) return;
+  item.qty--;
+  if(item.qty<=0) cart=cart.filter(p=>p.nama!==nama);
+  updateQty(nama);
+  render();
+}
+function updateQty(nama){
+  let id="qty-"+nama.replace(/\s/g,'');
+  let item=cart.find(p=>p.nama===nama);
+  document.getElementById(id).innerText=item?item.qty:0;
 }
 
 function render(){
-  if(cart.length===0){
-    cartText.innerText="🛒 Keranjang kosong";
-    totalHarga.innerText="Total: Rp0";
-    return;
-  }
-  let text="", total=0;
+  let text="",total=0;
   cart.forEach(p=>{
-    text+=`• ${p.nama}\n`;
-    total+=p.harga;
+    let sub=p.qty*p.harga;
+    text+=• ${p.nama} x${p.qty} = Rp${sub.toLocaleString()}\n;
+    total+=sub;
   });
-  cartText.innerText=text;
-  totalHarga.innerText="Total: Rp"+total.toLocaleString();
+  document.getElementById("cartText").innerText=text||"🛒 Keranjang kosong";
+  document.getElementById("totalHarga").innerText="Total: Rp"+total.toLocaleString();
 }
 
 function checkout(){
   if(cart.length===0) return alert("Keranjang kosong");
+  let total=cart.reduce((a,b)=>a+b.qty*b.harga,0);
   if(pembayaran.value==="QRIS"){
+    document.getElementById("qrisTotal").innerText="Total: Rp"+total.toLocaleString();
     qrisModal.style.display="flex";
-  }else{
-    konfirmasi();
-  }
+  }else konfirmasi();
 }
 
 function konfirmasi(){
-  let total=0;
-  let msg=`Halo Toko Mekar Mandiri, saya ingin pesan:%0A`;
-  cart.forEach(p=>{
-    msg+=`- ${p.nama} (Rp${p.harga})%0A`;
-    total+=p.harga;
-  });
-  msg+=`%0ATotal: Rp${total}%0APembayaran: ${pembayaran.value}`;
-  window.open(`https://wa.me/${whatsapp}?text=${msg}`,"_blank");
+  qrisModal.style.display="none";
+  tampilkanStruk();
 }
 
-function closeModal(){
-  qrisModal.style.display="none";
+function tampilkanStruk(){
+  antrian++; localStorage.setItem("antrian",antrian);
+  let html="",total=0;
+  cart.forEach(p=>{
+    let sub=p.qty*p.harga;
+    html+=${p.nama} x${p.qty} = Rp${sub.toLocaleString()}<br>;
+    total+=sub;
+  });
+  strukItem.innerHTML=html+<br>No Antrian: ${antrian};
+  strukTotal.innerHTML="<b>Total: Rp"+total.toLocaleString()+"</b>";
+  strukBayar.innerHTML="Pembayaran: "+pembayaran.value;
+  strukModal.style.display="flex";
 }
+
+function kirimWA(){
+  let msg="🧾 STRUK TOKO MEKAR MANDIRI%0A";
+  let total=0;
+  cart.forEach(p=>{
+    msg+=• ${p.nama} x${p.qty}%0A;
+    total+=p.qty*p.harga;
+  });
+  msg+=%0ATotal: Rp${total.toLocaleString()};
+  window.open(https://wa.me/${whatsapp}?text=${msg});
+}
+
+function closeModal(){qrisModal.style.display="none";}
+function closeStruk(){strukModal.style.display="none";cart=[];render();}
 </script>
 
 </body>
 </html>
-
