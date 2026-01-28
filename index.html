@@ -6,75 +6,68 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-:root{
-  --primary:#2e7d32;
-  --bg:#f4f6f8;
-}
-*{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Segoe UI, Arial;
-  background:var(--bg);
+  font-family:Arial, sans-serif;
+  background:#f4f6f8;
 }
 header{
-  background:linear-gradient(135deg,#2e7d32,#43a047);
-  color:#fff;
-  padding:20px;
+  background:#2e7d32;
+  color:white;
   text-align:center;
+  padding:20px;
 }
-.container{
+#product-list{
   padding:15px;
-  padding-bottom:230px;
+  padding-bottom:220px;
 }
-.category h3{color:var(--primary)}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:12px;
-}
-.card{
-  background:#fff;
-  border-radius:14px;
+.product{
+  background:white;
+  border-radius:12px;
   padding:12px;
-  box-shadow:0 6px 14px rgba(0,0,0,.08);
+  margin-bottom:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,.1);
 }
-.price{color:var(--primary);font-weight:bold}
+.price{
+  color:#2e7d32;
+  font-weight:bold;
+}
 .qty{
   display:flex;
   justify-content:center;
-  align-items:center;
   gap:10px;
-  margin-top:8px;
+  margin-top:10px;
 }
 .qty button{
   width:30px;
   height:30px;
   border:none;
-  background:var(--primary);
-  color:#fff;
+  background:#2e7d32;
+  color:white;
   border-radius:50%;
   font-size:18px;
 }
 .cart{
   position:fixed;
-  bottom:0;left:0;right:0;
-  background:#fff;
-  border-top:2px solid var(--primary);
+  bottom:0;
+  left:0;
+  right:0;
+  background:white;
+  border-top:2px solid #2e7d32;
   padding:12px;
 }
-button{
-  background:var(--primary);
+button.checkout{
+  background:#2e7d32;
+  color:white;
   border:none;
-  color:#fff;
-  padding:10px;
-  border-radius:8px;
   width:100%;
+  padding:12px;
+  border-radius:8px;
   margin-top:6px;
 }
 select{
   width:100%;
   padding:8px;
-  border-radius:6px;
   margin-top:6px;
 }
 .modal{
@@ -86,11 +79,11 @@ select{
   justify-content:center;
 }
 .modal-content{
-  background:#fff;
+  background:white;
   padding:16px;
-  border-radius:14px;
+  border-radius:12px;
   width:90%;
-  max-width:360px;
+  max-width:320px;
   text-align:center;
 }
 </style>
@@ -103,195 +96,144 @@ select{
   <p>Sembako & Klontong</p>
 </header>
 
-<div class="container" id="produkList"></div>
+<div id="product-list"></div>
 
 <div class="cart">
-  <pre id="cartText">🛒 Keranjang kosong</pre>
-  <div id="totalHarga"><b>Total: Rp0</b></div>
-  <select id="pembayaran">
+  <div id="cartText">🛒 Keranjang kosong</div>
+  <b id="totalText">Total: Rp0</b>
+  <select id="pay">
     <option>COD</option>
-    <option>Transfer Bank</option>
+    <option>Transfer</option>
     <option>QRIS</option>
   </select>
-  <button onclick="checkout()">Checkout</button>
+  <button class="checkout" onclick="checkout()">Checkout</button>
 </div>
 
 <!-- MODAL QRIS -->
 <div class="modal" id="qrisModal">
   <div class="modal-content">
-    <h3>💳 Pembayaran QRIS</h3>
+    <h3>Bayar QRIS</h3>
     <p id="qrisTotal"></p>
-    <img src="qris.jpg" style="width:100%;border-radius:10px">
-    <button onclick="konfirmasi()">Saya sudah bayar</button>
-    <button onclick="closeQRIS()" style="background:#ccc;color:#000">Tutup</button>
+    <img src="qris.jpg" style="width:100%">
+    <button class="checkout" onclick="confirm()">Saya sudah bayar</button>
+    <button onclick="closeQRIS()">Tutup</button>
   </div>
 </div>
 
 <!-- MODAL STRUK -->
 <div class="modal" id="strukModal">
   <div class="modal-content">
-    <h3>🧾 STRUK</h3>
-    <div id="strukItem"></div>
-    <p id="strukTotal"></p>
-    <p id="strukBayar"></p>
-    <button onclick="printBT()">🖨️ Cetak Bluetooth</button>
-    <button onclick="kirimWA()">📲 Kirim WhatsApp</button>
+    <h3>STRUK</h3>
+    <div id="strukData"></div>
+    <button class="checkout" onclick="sendWA()">Kirim WA</button>
     <button onclick="closeStruk()">Selesai</button>
   </div>
 </div>
 
 <script>
-/* ========= KONFIG ========= */
+/* ===== DATA PRODUK ===== */
+const products=[
+  {name:"Beras 5 Kg",price:65000},
+  {name:"Minyak Goreng",price:18000},
+  {name:"Gula Pasir",price:15000},
+  {name:"Mie Instan",price:3000},
+  {name:"Sabun Mandi",price:5000}
+];
+
 const whatsapp="6285162808162";
-
-/* ========= DATA ========= */
-const data={
-  "Sembako":[
-    {nama:"Beras Medium",harga:14000},
-    {nama:"Beras Super",harga:15500},
-    {nama:"Gula Pasir",harga:17500},
-    {nama:"Minyak Goreng 1L",harga:17500}
-  ],
-  "Kebutuhan":[
-    {nama:"Mie Instan",harga:3000},
-    {nama:"Sabun Mandi",harga:5000}
-  ]
-};
-
 let cart=[];
-let antrian=Number(localStorage.getItem("antrian")||0);
 
-/* ========= RENDER PRODUK ========= */
-const produkList=document.getElementById("produkList");
+/* ===== RENDER PRODUK ===== */
+const list=document.getElementById("product-list");
 
-for(let k in data){
-  let sec=document.createElement("div");
-  sec.className="category";
-  sec.innerHTML=<h3>${k}</h3><div class="grid"></div>;
-  let grid=sec.querySelector(".grid");
+products.forEach(p=>{
+  const div=document.createElement("div");
+  div.className="product";
+  div.innerHTML=`
+    <h4>${p.name}</h4>
+    <div class="price">Rp${p.price.toLocaleString()}</div>
+    <div class="qty">
+      <button onclick="minus('${p.name}')">−</button>
+      <span id="qty-${p.name}">0</span>
+      <button onclick="add('${p.name}',${p.price})">+</button>
+    </div>`;
+  list.appendChild(div);
+});
 
-  data[k].forEach(p=>{
-    let id=p.nama.replace(/\s/g,'');
-    let card=document.createElement("div");
-    card.className="card";
-    card.innerHTML=`
-      <h4>${p.nama}</h4>
-      <div class="price">Rp${p.harga.toLocaleString()}</div>
-      <div class="qty">
-        <button onclick="kurang('${p.nama}')">−</button>
-        <span id="qty-${id}">0</span>
-        <button onclick="tambah('${p.nama}',${p.harga})">+</button>
-      </div>`;
-    grid.appendChild(card);
-  });
-  produkList.appendChild(sec);
-}
-
-/* ========= CART ========= */
-function tambah(nama,harga){
-  let item=cart.find(p=>p.nama===nama);
+/* ===== CART ===== */
+function add(name,price){
+  let item=cart.find(i=>i.name===name);
   if(item) item.qty++;
-  else cart.push({nama,harga,qty:1});
-  updateQty(nama);
-  render();
+  else cart.push({name,price,qty:1});
+  update(name);
 }
-function kurang(nama){
-  let item=cart.find(p=>p.nama===nama);
+function minus(name){
+  let item=cart.find(i=>i.name===name);
   if(!item) return;
   item.qty--;
-  if(item.qty<=0) cart=cart.filter(p=>p.nama!==nama);
-  updateQty(nama);
-  render();
+  if(item.qty<=0) cart=cart.filter(i=>i.name!==name);
+  update(name);
 }
-function updateQty(nama){
-  let id="qty-"+nama.replace(/\s/g,'');
-  let item=cart.find(p=>p.nama===nama);
-  document.getElementById(id).innerText=item?item.qty:0;
+function update(name){
+  const item=cart.find(i=>i.name===name);
+  document.getElementById("qty-"+name).innerText=item?item.qty:0;
+  render();
 }
 function render(){
   let text="",total=0;
-  cart.forEach(p=>{
-    let sub=p.qty*p.harga;
-    text+=• ${p.nama} x${p.qty} = Rp${sub.toLocaleString()}\n;
+  cart.forEach(i=>{
+    let sub=i.qty*i.price;
+    text+=• ${i.name} x${i.qty} = Rp${sub.toLocaleString()}\n;
     total+=sub;
   });
-  cartText.innerText=text||"🛒 Keranjang kosong";
-  totalHarga.innerHTML="<b>Total: Rp"+total.toLocaleString()+"</b>";
+  document.getElementById("cartText").innerText=text||"🛒 Keranjang kosong";
+  document.getElementById("totalText").innerText="Total: Rp"+total.toLocaleString();
 }
 
-/* ========= CHECKOUT ========= */
+/* ===== CHECKOUT ===== */
 function checkout(){
   if(cart.length===0) return alert("Keranjang kosong");
-  let total=cart.reduce((a,b)=>a+b.qty*b.harga,0);
-  if(pembayaran.value==="QRIS"){
+  let total=cart.reduce((a,b)=>a+b.qty*b.price,0);
+  if(pay.value==="QRIS"){
     qrisTotal.innerText="Total: Rp"+total.toLocaleString();
     qrisModal.style.display="flex";
-  }else konfirmasi();
+  }else confirm();
 }
-function konfirmasi(){
+function confirm(){
   closeQRIS();
-  tampilkanStruk();
+  showStruk();
 }
 
-/* ========= STRUK ========= */
-function tampilkanStruk(){
-  antrian++;
-  localStorage.setItem("antrian",antrian);
-
+/* ===== STRUK ===== */
+function showStruk(){
   let html="",total=0;
-  cart.forEach(p=>{
-    let sub=p.qty*p.harga;
-    html+=${p.nama} x${p.qty} = Rp${sub.toLocaleString()}<br>;
+  cart.forEach(i=>{
+    let sub=i.qty*i.price;
+    html+=${i.name} x${i.qty} = Rp${sub.toLocaleString()}<br>;
     total+=sub;
   });
-  html+=<br>No Antrian: <b>${antrian}</b>;
-  strukItem.innerHTML=html;
-  strukTotal.innerHTML="<b>Total: Rp"+total.toLocaleString()+"</b>";
-  strukBayar.innerHTML="Pembayaran: "+pembayaran.value;
+  html+=<br><b>Total: Rp${total.toLocaleString()}</b><br>;
+  html+=Bayar: ${pay.value};
+  strukData.innerHTML=html;
   strukModal.style.display="flex";
 }
-
-/* ========= WHATSAPP ========= */
-function kirimWA(){
-  let msg="🧾 STRUK TOKO MEKAR MANDIRI%0A";
-  let total=0;
-  cart.forEach(p=>{
-    msg+=• ${p.nama} x${p.qty}%0A;
-    total+=p.qty*p.harga;
-  });
-  msg+=%0ATotal: Rp${total.toLocaleString()}%0APembayaran: ${pembayaran.value};
-  window.open(https://wa.me/${whatsapp}?text=${msg});
-}
-
-/* ========= BLUETOOTH PRINT ========= */
-function printBT(){
-  let total=0;
-  let text="TOKO MEKAR MANDIRI\n";
-  text+="--------------------------\n";
-  cart.forEach(p=>{
-    let sub=p.qty*p.harga;
-    text+=${p.nama}\n ${p.qty} x ${p.harga} = ${sub}\n;
-    total+=sub;
-  });
-  text+="--------------------------\n";
-  text+=TOTAL : ${total}\n;
-  text+=BAYAR : ${pembayaran.value}\n;
-  text+=ANTRI : ${antrian}\n;
-  text+=new Date().toLocaleString("id-ID")+"\n";
-  text+="Terima kasih\n\n";
-
-  window.location.href=
-    "intent://print/#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text="+
-    encodeURIComponent(text)+";end";
-}
-
-/* ========= UTIL ========= */
 function closeStruk(){
   strukModal.style.display="none";
   cart=[];
   render();
-  document.querySelectorAll("[id^=qty-]").forEach(e=>e.innerText="0");
+  document.querySelectorAll("[id^='qty-']").forEach(e=>e.innerText=0);
 }
+
+/* ===== WHATSAPP ===== */
+function sendWA(){
+  let msg="STRUK TOKO MEKAR MANDIRI%0A";
+  cart.forEach(i=>{
+    msg+=${i.name} x${i.qty}%0A;
+  });
+  window.open(https://wa.me/${whatsapp}?text=${msg});
+}
+
+/* ===== UTIL ===== */
 function closeQRIS(){qrisModal.style.display="none";}
 </script>
 
