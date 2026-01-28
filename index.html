@@ -161,7 +161,7 @@ products.forEach(p=>{
 });
 
 /* ===== CART ===== */
-function add(name,price){
+function addItem(name,price){
   let item=cart.find(i=>i.name===name);
   if(item) item.qty++;
   else cart.push({name,price,qty:1});
@@ -181,23 +181,25 @@ function update(name){
 }
 function render(){
   let text="",total=0;
-  cart.forEach(i=>{
+  for(let i = 0; i < cart.length; i++){
+    let item = cart[i];
     let sub=i.qty*i.price;
     text += i.name + " x" + i.qty + " - Rp" + sub.toLocaleString() + "\n";
     total+=sub;
-  });
+  };
   document.getElementById("cartText").innerText=text||"🛒 Keranjang kosong";
   document.getElementById("totalText").innerText="Total: Rp"+total.toLocaleString();
 }
 
 /* ===== CHECKOUT ===== */
 function checkout(){
-  if(cart.length===0) return alert("Keranjang kosong");
+  if(cart.length===0) alert("Keranjang kosong") return;
+}
   let total=cart.reduce((a,b)=>a+b.qty*b.price,0);
   if(pay.value==="QRIS"){
     qrisTotal.innerText="Total: Rp"+total.toLocaleString();
     qrisModal.style.display="flex";
-  }else confirm();
+  }else{ confirm();
 }
 function confirm(){
   closeQRIS();
@@ -239,6 +241,7 @@ function closeQRIS(){qrisModal.style.display="none";}
 
 </body>
 </html>
+
 
 
 
