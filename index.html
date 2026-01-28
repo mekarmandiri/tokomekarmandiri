@@ -183,8 +183,8 @@ function render(){
   let text="",total=0;
   cart.forEach(i=>{
     let sub=i.qty*i.price;
-    text += '${i.name} x${i.qty} - Rp${sub.toLocaleString()}\n;
-    total += sub;
+    text+='${i.name} x${i.qty} - Rp${sub.toLocaleString()}\n;
+    total+=sub;
   });
   document.getElementById("cartText").innerText=text||"🛒 Keranjang kosong";
   document.getElementById("totalText").innerText="Total: Rp"+total.toLocaleString();
@@ -239,6 +239,7 @@ function closeQRIS(){qrisModal.style.display="none";}
 
 </body>
 </html>
+
 
 
 
