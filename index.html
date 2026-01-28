@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Toko Mekar Mandiri</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{
@@ -13,79 +13,52 @@ body{
 }
 header{
   background:#2e7d32;
-  color:white;
+  color:#fff;
   text-align:center;
-  padding:20px;
+  padding:16px;
 }
-#product-list{
-  padding:15px;
-  padding-bottom:220px;
-}
-.product{
-  background:white;
-  border-radius:12px;
+#list{
   padding:12px;
+  padding-bottom:200px;
+}
+.item{
+  background:#fff;
+  padding:12px;
+  border-radius:10px;
   margin-bottom:10px;
-  box-shadow:0 4px 10px rgba(0,0,0,.1);
 }
-.price{
-  color:#2e7d32;
-  font-weight:bold;
-}
+.price{color:#2e7d32;font-weight:bold}
 .qty{
   display:flex;
-  justify-content:center;
   gap:10px;
-  margin-top:10px;
+  margin-top:8px;
 }
 .qty button{
   width:30px;
   height:30px;
   border:none;
   background:#2e7d32;
-  color:white;
+  color:#fff;
   border-radius:50%;
-  font-size:18px;
 }
 .cart{
   position:fixed;
   bottom:0;
   left:0;
   right:0;
-  background:white;
+  background:#fff;
   border-top:2px solid #2e7d32;
-  padding:12px;
+  padding:10px;
 }
-button.checkout{
+button{
+  width:100%;
+  padding:10px;
   background:#2e7d32;
-  color:white;
   border:none;
-  width:100%;
-  padding:12px;
+  color:#fff;
   border-radius:8px;
-  margin-top:6px;
 }
-select{
-  width:100%;
-  padding:8px;
-  margin-top:6px;
-}
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  align-items:center;
-  justify-content:center;
-}
-.modal-content{
-  background:white;
-  padding:16px;
-  border-radius:12px;
-  width:90%;
-  max-width:320px;
-  text-align:center;
-}
+select{width:100%;padding:6px;margin:6px 0}
 </style>
 </head>
 
@@ -96,145 +69,71 @@ select{
   <p>Sembako & Klontong</p>
 </header>
 
-<div id="product-list"></div>
+<div id="list"></div>
 
 <div class="cart">
   <div id="cartText">🛒 Keranjang kosong</div>
-  <b id="totalText">Total: Rp0</b>
+  <b id="total">Total: Rp0</b>
   <select id="pay">
     <option>COD</option>
     <option>Transfer</option>
     <option>QRIS</option>
   </select>
-  <button class="checkout" onclick="checkout()">Checkout</button>
-</div>
-
-<!-- MODAL QRIS -->
-<div class="modal" id="qrisModal">
-  <div class="modal-content">
-    <h3>Bayar QRIS</h3>
-    <p id="qrisTotal"></p>
-    <img src="qris.jpg" style="width:100%">
-    <button class="checkout" onclick="confirm()">Saya sudah bayar</button>
-    <button onclick="closeQRIS()">Tutup</button>
-  </div>
-</div>
-
-<!-- MODAL STRUK -->
-<div class="modal" id="strukModal">
-  <div class="modal-content">
-    <h3>STRUK</h3>
-    <div id="strukData"></div>
-    <button class="checkout" onclick="sendWA()">Kirim WA</button>
-    <button onclick="closeStruk()">Selesai</button>
-  </div>
+  <button onclick="checkout()">Checkout</button>
 </div>
 
 <script>
-/* ===== DATA PRODUK ===== */
 const products=[
-  {name:"Beras 5 Kg",price:65000},
-  {name:"Minyak Goreng",price:18000},
+  {name:"Beras Medium",price:14000},
   {name:"Gula Pasir",price:15000},
-  {name:"Mie Instan",price:3000},
-  {name:"Sabun Mandi",price:5000}
+  {name:"Minyak Goreng",price:18000},
+  {name:"Mie Instan",price:3000}
 ];
 
-const whatsapp="6285162808162";
 let cart=[];
-
-/* ===== RENDER PRODUK ===== */
-const list=document.getElementById("product-list");
+const list=document.getElementById("list");
 
 products.forEach(p=>{
   const div=document.createElement("div");
-  div.className="product";
+  div.className="item";
   div.innerHTML=`
     <h4>${p.name}</h4>
-    <div class="price">Rp${p.price.toLocaleString()}</div>
+    <div class="price">Rp${p.price}</div>
     <div class="qty">
-      <button onclick="minus('${p.name}')">−</button>
-      <span id="qty-${p.name}">0</span>
+      <button onclick="minus('${p.name}')">-</button>
+      <span id="q-${p.name}">0</span>
       <button onclick="add('${p.name}',${p.price})">+</button>
     </div>`;
   list.appendChild(div);
 });
 
-/* ===== CART ===== */
 function add(name,price){
-  let item=cart.find(i=>i.name===name);
-  if(item) item.qty++;
+  let i=cart.find(x=>x.name===name);
+  if(i) i.qty++;
   else cart.push({name,price,qty:1});
-  update(name);
+  update();
 }
 function minus(name){
-  let item=cart.find(i=>i.name===name);
-  if(!item) return;
-  item.qty--;
-  if(item.qty<=0) cart=cart.filter(i=>i.name!==name);
-  update(name);
+  let i=cart.find(x=>x.name===name);
+  if(!i) return;
+  i.qty--;
+  if(i.qty<=0) cart=cart.filter(x=>x.name!==name);
+  update();
 }
-function update(name){
-  const item=cart.find(i=>i.name===name);
-  document.getElementById("qty-"+name).innerText=item?item.qty:0;
-  render();
-}
-function render(){
+function update(){
   let text="",total=0;
   cart.forEach(i=>{
-    let sub=i.qty*i.price;
-    text+=• ${i.name} x${i.qty} = Rp${sub.toLocaleString()}\n;
-    total+=sub;
+    document.getElementById("q-"+i.name).innerText=i.qty;
+    text+=${i.name} x${i.qty}\n;
+    total+=i.qty*i.price;
   });
   document.getElementById("cartText").innerText=text||"🛒 Keranjang kosong";
-  document.getElementById("totalText").innerText="Total: Rp"+total.toLocaleString();
+  document.getElementById("total").innerText="Total: Rp"+total;
 }
-
-/* ===== CHECKOUT ===== */
 function checkout(){
-  if(cart.length===0) return alert("Keranjang kosong");
-  let total=cart.reduce((a,b)=>a+b.qty*b.price,0);
-  if(pay.value==="QRIS"){
-    qrisTotal.innerText="Total: Rp"+total.toLocaleString();
-    qrisModal.style.display="flex";
-  }else confirm();
+  if(cart.length===0) alert("Keranjang kosong");
+  else alert("Checkout OK");
 }
-function confirm(){
-  closeQRIS();
-  showStruk();
-}
-
-/* ===== STRUK ===== */
-function showStruk(){
-  let html="",total=0;
-  cart.forEach(i=>{
-    let sub=i.qty*i.price;
-    html+=${i.name} x${i.qty} = Rp${sub.toLocaleString()}<br>;
-    total+=sub;
-  });
-  html+=<br><b>Total: Rp${total.toLocaleString()}</b><br>;
-  html+=Bayar: ${pay.value};
-  strukData.innerHTML=html;
-  strukModal.style.display="flex";
-}
-function closeStruk(){
-  strukModal.style.display="none";
-  cart=[];
-  render();
-  document.querySelectorAll("[id^='qty-']").forEach(e=>e.innerText=0);
-}
-
-/* ===== WHATSAPP ===== */
-function sendWA(){
-  let msg="STRUK TOKO MEKAR MANDIRI%0A";
-  cart.forEach(i=>{
-    msg+=${i.name} x${i.qty}%0A;
-  });
-  window.open(https://wa.me/${whatsapp}?text=${msg});
-}
-
-/* ===== UTIL ===== */
-function closeQRIS(){qrisModal.style.display="none";}
 </script>
 
 </body>
