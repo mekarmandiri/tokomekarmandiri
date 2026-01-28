@@ -116,7 +116,6 @@ select{
   <button onclick="checkout()">Checkout</button>
 </div>
 
-<!-- MODAL QRIS -->
 <div class="modal" id="qrisModal">
   <div class="modal-content">
     <h3>💳 Pembayaran QRIS</h3>
@@ -127,7 +126,6 @@ select{
   </div>
 </div>
 
-<!-- MODAL STRUK -->
 <div class="modal" id="strukModal">
   <div class="modal-content">
     <h3>🧾 STRUK</h3>
@@ -141,10 +139,12 @@ select{
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function(){
+
 /* KONFIG */
 const whatsapp="6285162808162";
 
-/* DATA PRODUK */
+/* DATA */
 const data={
   "Sembako":[
     {nama:"Beras Medium",harga:14000},
@@ -161,9 +161,18 @@ const data={
 let cart=[];
 let antrian=Number(localStorage.getItem("antrian")||0);
 
-/* RENDER PRODUK */
 const produkList=document.getElementById("produkList");
+const cartText=document.getElementById("cartText");
+const totalHarga=document.getElementById("totalHarga");
+const pembayaran=document.getElementById("pembayaran");
+const qrisModal=document.getElementById("qrisModal");
+const qrisTotal=document.getElementById("qrisTotal");
+const strukModal=document.getElementById("strukModal");
+const strukItem=document.getElementById("strukItem");
+const strukTotal=document.getElementById("strukTotal");
+const strukBayar=document.getElementById("strukBayar");
 
+/* RENDER PRODUK */
 for(let k in data){
   let sec=document.createElement("div");
   sec.className="category";
@@ -184,18 +193,19 @@ for(let k in data){
       </div>`;
     grid.appendChild(card);
   });
+
   produkList.appendChild(sec);
 }
 
 /* CART */
-function tambah(nama,harga){
+window.tambah=function(nama,harga){
   let item=cart.find(p=>p.nama===nama);
   if(item) item.qty++;
   else cart.push({nama,harga,qty:1});
   updateQty(nama);
   render();
 }
-function kurang(nama){
+window.kurang=function(nama){
   let item=cart.find(p=>p.nama===nama);
   if(!item) return;
   item.qty--;
@@ -220,7 +230,7 @@ function render(){
 }
 
 /* CHECKOUT */
-function checkout(){
+window.checkout=function(){
   if(cart.length===0) return alert("Keranjang kosong");
   let total=cart.reduce((a,b)=>a+b.qty*b.harga,0);
   if(pembayaran.value==="QRIS"){
@@ -228,7 +238,7 @@ function checkout(){
     qrisModal.style.display="flex";
   }else konfirmasi();
 }
-function konfirmasi(){
+window.konfirmasi=function(){
   closeQRIS();
   tampilkanStruk();
 }
@@ -252,7 +262,7 @@ function tampilkanStruk(){
 }
 
 /* WHATSAPP */
-function kirimWA(){
+window.kirimWA=function(){
   let msg="🧾 STRUK TOKO MEKAR MANDIRI%0A";
   let total=0;
   cart.forEach(p=>{
@@ -263,8 +273,8 @@ function kirimWA(){
   window.open(`https://wa.me/${whatsapp}?text=${msg}`);
 }
 
-/* BLUETOOTH PRINT */
-function printBT(){
+/* PRINT */
+window.printBT=function(){
   let total=0;
   let text="TOKO MEKAR MANDIRI\n--------------------------\n";
   cart.forEach(p=>{
@@ -281,19 +291,22 @@ function printBT(){
 }
 
 /* UTIL */
-function closeStruk(){
+window.closeStruk=function(){
   strukModal.style.display="none";
   cart=[];
   render();
   document.querySelectorAll("[id^=qty-]").forEach(e=>e.innerText="0");
 }
-function closeQRIS(){
+window.closeQRIS=function(){
   qrisModal.style.display="none";
 }
+
+});
 </script>
 
 </body>
 </html>
+
 
 
 
