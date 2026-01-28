@@ -208,12 +208,15 @@ function confirm(){
 
 /* ===== STRUK ===== */
 function showStruk(){
-  let html="",total=0;
-  cart.forEach(i=>{
-    let sub=i.qty*i.price;
-    html+=${i.name} x${i.qty} = Rp${sub.toLocaleString()}<br>;
-    total+=sub;
+  let html = "", total = 0;
+
+  cart.forEach(i => {
+    let sub = i.qty * i.price;
+    html += i.name + " x" + i.qty +
+            " = Rp" + sub.toLocaleString() + "<br>";
+    total += sub;
   });
+}
   html+=<br><b>Total: Rp${total.toLocaleString()}</b><br>;
   html+=Bayar: ${pay.value};
   strukData.innerHTML=html;
@@ -241,6 +244,7 @@ function closeQRIS(){qrisModal.style.display="none";}
 
 </body>
 </html>
+
 
 
 
