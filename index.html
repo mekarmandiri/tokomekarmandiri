@@ -10,6 +10,7 @@
   --primary:#2e7d32;
   --bg:#f4f6f8;
 }
+*{box-sizing:border-box}
 body{
   margin:0;
   font-family:Segoe UI, Arial;
@@ -23,7 +24,7 @@ header{
 }
 .container{
   padding:15px;
-  padding-bottom:200px;
+  padding-bottom:220px;
 }
 .category h3{color:var(--primary)}
 .grid{
@@ -41,7 +42,8 @@ header{
 .qty{
   display:flex;
   justify-content:center;
-  gap:8px;
+  align-items:center;
+  gap:10px;
   margin-top:8px;
 }
 .qty button{
@@ -51,6 +53,7 @@ header{
   background:var(--primary);
   color:#fff;
   border-radius:50%;
+  font-size:18px;
 }
 .cart{
   position:fixed;
@@ -58,6 +61,21 @@ header{
   background:#fff;
   border-top:2px solid var(--primary);
   padding:12px;
+}
+button{
+  background:var(--primary);
+  border:none;
+  color:#fff;
+  padding:10px;
+  border-radius:8px;
+  width:100%;
+  margin-top:6px;
+}
+select{
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  margin-top:6px;
 }
 .modal{
   display:none;
@@ -82,7 +100,7 @@ header{
 
 <header>
   <h2>Toko Mekar Mandiri</h2>
-  <p>Sembako & Klontong • Online</p>
+  <p>Sembako & Klontong</p>
 </header>
 
 <div class="container" id="produkList"></div>
@@ -101,11 +119,11 @@ header{
 <!-- MODAL QRIS -->
 <div class="modal" id="qrisModal">
   <div class="modal-content">
-    <h3>💳 Scan QRIS</h3>
+    <h3>💳 Pembayaran QRIS</h3>
     <p id="qrisTotal"></p>
     <img src="qris.jpg" style="width:100%;border-radius:10px">
-    <button onclick="konfirmasi()">Saya sudah bayar</button><br><br>
-    <button onclick="closeModal()">Tutup</button>
+    <button onclick="konfirmasi()">Saya sudah bayar</button>
+    <button onclick="closeQRIS()" style="background:#ccc;color:#000">Tutup</button>
   </div>
 </div>
 
@@ -116,12 +134,14 @@ header{
     <div id="strukItem"></div>
     <p id="strukTotal"></p>
     <p id="strukBayar"></p>
-    <button onclick="kirimWA()">Kirim ke WhatsApp</button><br><br>
+    <button onclick="printBT()">🖨️ Cetak Bluetooth</button>
+    <button onclick="kirimWA()">📲 Kirim WhatsApp</button>
     <button onclick="closeStruk()">Selesai</button>
   </div>
 </div>
 
 <script>
+/* ================= DATA ================= */
 const whatsapp="6285162808162";
 
 const data={
@@ -140,10 +160,12 @@ const data={
 let cart=[];
 let antrian=Number(localStorage.getItem("antrian")||0);
 
+/* ================= RENDER PRODUK ================= */
 const produkList=document.getElementById("produkList");
 
 for(let k in data){
   let sec=document.createElement("div");
+  sec.className="category";
   sec.innerHTML=<h3>${k}</h3><div class="grid"></div>;
   let grid=sec.querySelector(".grid");
 
@@ -164,6 +186,7 @@ for(let k in data){
   produkList.appendChild(sec);
 }
 
+/* ================= CART ================= */
 function tambah(nama,harga){
   let item=cart.find(p=>p.nama===nama);
   if(item) item.qty++;
@@ -184,7 +207,6 @@ function updateQty(nama){
   let item=cart.find(p=>p.nama===nama);
   document.getElementById(id).innerText=item?item.qty:0;
 }
-
 function render(){
   let text="",total=0;
   cart.forEach(p=>{
@@ -196,6 +218,7 @@ function render(){
   document.getElementById("totalHarga").innerText="Total: Rp"+total.toLocaleString();
 }
 
+/* ================= CHECKOUT ================= */
 function checkout(){
   if(cart.length===0) return alert("Keranjang kosong");
   let total=cart.reduce((a,b)=>a+b.qty*b.harga,0);
@@ -206,24 +229,36 @@ function checkout(){
 }
 
 function konfirmasi(){
-  qrisModal.style.display="none";
+  closeQRIS();
   tampilkanStruk();
 }
 
+/* ================= STRUK ================= */
 function tampilkanStruk(){
-  antrian++; localStorage.setItem("antrian",antrian);
+  antrian++;
+  localStorage.setItem("antrian",antrian);
+
   let html="",total=0;
   cart.forEach(p=>{
     let sub=p.qty*p.harga;
     html+=${p.nama} x${p.qty} = Rp${sub.toLocaleString()}<br>;
     total+=sub;
   });
-  strukItem.innerHTML=html+<br>No Antrian: ${antrian};
+  html+=<br>No Antrian: <b>${antrian}</b>;
+  strukItem.innerHTML=html;
   strukTotal.innerHTML="<b>Total: Rp"+total.toLocaleString()+"</b>";
   strukBayar.innerHTML="Pembayaran: "+pembayaran.value;
   strukModal.style.display="flex";
 }
 
+function closeStruk(){
+  strukModal.style.display="none";
+  cart=[];
+  render();
+  document.querySelectorAll("[id^=qty-]").forEach(e=>e.innerText="0");
+}
+
+/* ================= WHATSAPP ================= */
 function kirimWA(){
   let msg="🧾 STRUK TOKO MEKAR MANDIRI%0A";
   let total=0;
@@ -235,8 +270,30 @@ function kirimWA(){
   window.open(https://wa.me/${whatsapp}?text=${msg});
 }
 
-function closeModal(){qrisModal.style.display="none";}
-function closeStruk(){strukModal.style.display="none";cart=[];render();}
+/* ================= BLUETOOTH PRINT ================= */
+function printBT(){
+  let total=0;
+  let text="TOKO MEKAR MANDIRI\n";
+  text+="--------------------------\n";
+  cart.forEach(p=>{
+    let sub=p.qty*p.harga;
+    text+=${p.nama}\n ${p.qty} x ${p.harga} = ${sub}\n;
+    total+=sub;
+  });
+  text+="--------------------------\n";
+  text+=TOTAL : ${total}\n;
+  text+=BAYAR : ${pembayaran.value}\n;
+  text+=ANTRI : ${antrian}\n\n;
+  text+=new Date().toLocaleString("id-ID")+"\n";
+  text+="Terima kasih\n\n\n";
+
+  window.location.href=
+    "intent://print/#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text="+
+    encodeURIComponent(text)+";end";
+}
+
+/* ================= UTIL ================= */
+function closeQRIS(){qrisModal.style.display="none";}
 </script>
 
 </body>
