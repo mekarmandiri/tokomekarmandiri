@@ -6,68 +6,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+:root{
+  --primary:#2e7d32;
+  --bg:#f4f6f8;
+}
+*{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:#f4f6f8;
+  font-family:Segoe UI, Arial;
+  background:var(--bg);
 }
 header{
-  background:#2e7d32;
-  color:white;
-  text-align:center;
+  background:linear-gradient(135deg,#2e7d32,#43a047);
+  color:#fff;
   padding:20px;
+  text-align:center;
 }
-#product-list{
+.container{
   padding:15px;
-  padding-bottom:220px;
+  padding-bottom:230px;
 }
-.product{
-  background:white;
-  border-radius:12px;
+.category h3{color:var(--primary)}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:12px;
+}
+.card{
+  background:#fff;
+  border-radius:14px;
   padding:12px;
-  margin-bottom:10px;
-  box-shadow:0 4px 10px rgba(0,0,0,.1);
+  box-shadow:0 6px 14px rgba(0,0,0,.08);
 }
-.price{
-  color:#2e7d32;
-  font-weight:bold;
-}
+.price{color:var(--primary);font-weight:bold}
 .qty{
   display:flex;
   justify-content:center;
+  align-items:center;
   gap:10px;
-  margin-top:10px;
+  margin-top:8px;
 }
 .qty button{
   width:30px;
   height:30px;
   border:none;
-  background:#2e7d32;
-  color:white;
+  background:var(--primary);
+  color:#fff;
   border-radius:50%;
   font-size:18px;
 }
 .cart{
   position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:white;
-  border-top:2px solid #2e7d32;
+  bottom:0;left:0;right:0;
+  background:#fff;
+  border-top:2px solid var(--primary);
   padding:12px;
 }
-button.checkout{
-  background:#2e7d32;
-  color:white;
+button{
+  background:var(--primary);
   border:none;
-  width:100%;
-  padding:12px;
+  color:#fff;
+  padding:10px;
   border-radius:8px;
+  width:100%;
   margin-top:6px;
 }
 select{
   width:100%;
   padding:8px;
+  border-radius:6px;
   margin-top:6px;
 }
 .modal{
@@ -79,11 +86,11 @@ select{
   justify-content:center;
 }
 .modal-content{
-  background:white;
+  background:#fff;
   padding:16px;
-  border-radius:12px;
+  border-radius:14px;
   width:90%;
-  max-width:320px;
+  max-width:360px;
   text-align:center;
 }
 </style>
@@ -96,43 +103,48 @@ select{
   <p>Sembako & Klontong</p>
 </header>
 
-<div id="product-list"></div>
+<div class="container" id="produkList"></div>
 
 <div class="cart">
-  <div id="cartText">🛒 Keranjang kosong</div>
-  <b id="totalText">Total: Rp0</b>
-  <select id="pay">
+  <pre id="cartText">🛒 Keranjang kosong</pre>
+  <div id="totalHarga"><b>Total: Rp0</b></div>
+  <select id="pembayaran">
     <option>COD</option>
-    <option>Transfer</option>
+    <option>Transfer Bank</option>
     <option>QRIS</option>
   </select>
-  <button class="checkout" onclick="checkout()">Checkout</button>
+  <button onclick="checkout()">Checkout</button>
 </div>
 
 <!-- MODAL QRIS -->
 <div class="modal" id="qrisModal">
   <div class="modal-content">
-    <h3>Bayar QRIS</h3>
+    <h3>💳 Pembayaran QRIS</h3>
     <p id="qrisTotal"></p>
-    <img src="qris.jpg" style="width:100%">
-    <button class="checkout" onclick="confirm()">Saya sudah bayar</button>
-    <button onclick="closeQRIS()">Tutup</button>
+    <img src="qris.jpg" style="width:100%;border-radius:10px">
+    <button onclick="konfirmasi()">Saya sudah bayar</button>
+    <button onclick="closeQRIS()" style="background:#ccc;color:#000">Tutup</button>
   </div>
 </div>
 
 <!-- MODAL STRUK -->
 <div class="modal" id="strukModal">
   <div class="modal-content">
-    <h3>STRUK</h3>
-    <div id="strukData"></div>
-    <button class="checkout" onclick="sendWA()">Kirim WA</button>
+    <h3>🧾 STRUK</h3>
+    <div id="strukItem"></div>
+    <p id="strukTotal"></p>
+    <p id="strukBayar"></p>
+    <button onclick="printBT()">🖨️ Cetak Bluetooth</button>
+    <button onclick="kirimWA()">📲 Kirim WhatsApp</button>
     <button onclick="closeStruk()">Selesai</button>
   </div>
 </div>
 
 <script>
+/* KONFIG */
 const whatsapp="6285162808162";
 
+/* DATA PRODUK */
 const data={
   "Sembako":[
     {nama:"Beras Medium",harga:14000},
@@ -149,6 +161,7 @@ const data={
 let cart=[];
 let antrian=Number(localStorage.getItem("antrian")||0);
 
+/* RENDER PRODUK */
 const produkList=document.getElementById("produkList");
 
 for(let k in data){
@@ -174,6 +187,7 @@ for(let k in data){
   produkList.appendChild(sec);
 }
 
+/* CART */
 function tambah(nama,harga){
   let item=cart.find(p=>p.nama===nama);
   if(item) item.qty++;
@@ -205,6 +219,7 @@ function render(){
   totalHarga.innerHTML="<b>Total: Rp"+total.toLocaleString()+"</b>";
 }
 
+/* CHECKOUT */
 function checkout(){
   if(cart.length===0) return alert("Keranjang kosong");
   let total=cart.reduce((a,b)=>a+b.qty*b.harga,0);
@@ -218,6 +233,7 @@ function konfirmasi(){
   tampilkanStruk();
 }
 
+/* STRUK */
 function tampilkanStruk(){
   antrian++;
   localStorage.setItem("antrian",antrian);
@@ -235,6 +251,7 @@ function tampilkanStruk(){
   strukModal.style.display="flex";
 }
 
+/* WHATSAPP */
 function kirimWA(){
   let msg="🧾 STRUK TOKO MEKAR MANDIRI%0A";
   let total=0;
@@ -246,6 +263,7 @@ function kirimWA(){
   window.open(`https://wa.me/${whatsapp}?text=${msg}`);
 }
 
+/* BLUETOOTH PRINT */
 function printBT(){
   let total=0;
   let text="TOKO MEKAR MANDIRI\n--------------------------\n";
@@ -262,17 +280,21 @@ function printBT(){
     encodeURIComponent(text)+";end";
 }
 
+/* UTIL */
 function closeStruk(){
   strukModal.style.display="none";
   cart=[];
   render();
   document.querySelectorAll("[id^=qty-]").forEach(e=>e.innerText="0");
 }
-function closeQRIS(){qrisModal.style.display="none";}
+function closeQRIS(){
+  qrisModal.style.display="none";
+}
 </script>
 
 </body>
 </html>
+
 
 
 
